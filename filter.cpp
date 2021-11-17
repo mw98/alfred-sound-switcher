@@ -42,6 +42,16 @@ int prepend_to_PATH(string path) {
     return setenv("PATH", new_PATH.c_str(), 1);
 }
 
+/* Regex match unique substr */
+string regex_match_substr(string input, regex pattern) {
+    smatch match;
+    if (!regex_search(input, match, pattern)) {
+        cerr << "regex match failed for: " << input << '\n';
+        exit(1);
+    }
+    return match.str();
+}
+
 int main() {
     
     /* Construct SwitchAudioSource commands */
@@ -55,18 +65,10 @@ int main() {
     /* Get currently selected device ids */
     string raw_current_output = exec(get_current_input.c_str());
     string raw_current_input = exec(get_current_output.c_str());
-    smatch current_output_id;
-    smatch current_input_id;
-    regex rgx("[0-9]{2}");
-    if (!regex_search(raw_current_output, current_output_id, rgx)) {
-        cerr << "current output id not found" << '\n';
-        exit(1);
-    }
-    if (!regex_search(raw_current_input, current_input_id, rgx)) {
-        cerr << "current input id not found" << '\n';
-        exit(1);
-    }
-    set<string> current_devices = {current_output_id[0], current_input_id[0]};
+    regex two_digits_regex("[0-9]{2}");
+    string current_output_id = regex_match_substr(raw_current_output, two_digits_regex);
+    string current_input_id = regex_match_substr(raw_current_input, two_digits_regex);
+    set<string> current_devices = {current_output_id, current_input_id};
     
     /* Parse SwitchAudioSource JSON */
     string json = regex_replace(exec(get_json.c_str()), regex("\n"), ",");
@@ -87,12 +89,12 @@ int main() {
     /* Construct script filter JSON */
     picojson::object result;
     picojson::array items;
+    string nozoom = get_env_var("NOZOOM");
     const picojson::value::array& devices = v.get<picojson::array>();
     for (picojson::value::array::const_reverse_iterator i = devices.rbegin(); i != devices.rend(); ++i) {
         
         const picojson::value::object& device = (*i).get<picojson::object>();
-        string name = device.at("name").get<string>();
-        string nozoom = get_env_var("NOZOOM");        
+        string name = device.at("name").get<string>();        
         if (nozoom == "true" && name == "ZoomAudioDevice") {
             continue;
         }
