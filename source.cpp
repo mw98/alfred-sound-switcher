@@ -27,7 +27,7 @@ string exec(const char * cmd) {
 string get_env_var(const char * varname, string fallback = "") {
     string result;
     char * val = getenv(varname);
-    if (val == NULL) {
+    if (val == NULL || *val == '\0') {
         result = fallback;
     } else {
         result = val;
@@ -35,21 +35,26 @@ string get_env_var(const char * varname, string fallback = "") {
     return result;
 }
 
+/* Update PATH env var */
+int prepend_to_PATH(string path) {
+    string current_PATH = get_env_var("PATH");
+    string new_PATH = path+current_PATH;
+    return setenv("PATH", new_PATH.c_str(), 1);
+}
+
 int main() {
     
-    /* Get SwitchAudioSource path from env var */
-    string cmd = get_env_var("CMDPATH", "/usr/local/bin/SwitchAudioSource");
-    string tmp = cmd + " -af json";
-    const char * json_cmd = tmp.c_str();
+    /* Construct SwitchAudioSource commands */
+    prepend_to_PATH("/opt/homebrew/bin:/usr/local/bin:"); // update PATH
+    string cmd = get_env_var("CMDPATH", "switchaudiosource"); // use user-specified path if set
+    string get_json = cmd + " -af json";
     cmd.append(" -cf cli -t ");
-    string tmp1 = cmd + "input";
-    const char * current_input_cmd = tmp1.c_str();
-    string tmp2 = cmd + "output";
-    const char * current_output_cmd = tmp2.c_str();
+    string get_current_input = cmd + "input";
+    string get_current_output = cmd + "output";
     
     /* Get currently selected device ids */
-    string raw_current_output = exec(current_input_cmd);
-    string raw_current_input = exec(current_output_cmd);
+    string raw_current_output = exec(get_current_input.c_str());
+    string raw_current_input = exec(get_current_output.c_str());
     smatch current_output_id;
     smatch current_input_id;
     regex rgx("[0-9]{2}");
@@ -64,7 +69,7 @@ int main() {
     set<string> current_devices = {current_output_id[0], current_input_id[0]};
     
     /* Parse SwitchAudioSource JSON */
-    string json = regex_replace(exec(json_cmd), regex("\n"), ",");
+    string json = regex_replace(exec(get_json.c_str()), regex("\n"), ",");
     json.pop_back();
     json.insert(0, "[");
     json.append("]");
