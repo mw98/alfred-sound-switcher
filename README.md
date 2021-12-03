@@ -7,7 +7,7 @@ Forum post: https://www.alfredforum.com/topic/17556-fast-sound-inputoutput-selec
 1. Download source code from releases
 2. Navigate to the source directory and run:
 ```
-clang++ -Wall -std=c++20 filter.cpp -o sound_filter
+clang++ -std=c++20 sound_filter.cpp -o sound_filter
 ```
 
 ## Credits
