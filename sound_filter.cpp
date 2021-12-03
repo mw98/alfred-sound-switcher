@@ -60,20 +60,19 @@ int main() {
     file.close();
     
     // Construct script filter JSON
-    std::array<char, 128> buffer;
+    std::array<char, 1024> json;
     std::unique_ptr<FILE, decltype(&pclose)> pipe { popen(get_all_devices.c_str(), "r"), pclose };
     if (!pipe) {
         std::cerr << "popen() failed!" << '\n';
         exit(1);
     }
-    
     std::string result { "{\"items\":[" };
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        std::string device = buffer.data();
+    while (fgets(json.data(), json.size(), pipe.get()) != nullptr) {
+        std::string device = json.data();
         picojson::value v;
         std::string err = picojson::parse(v, device);
         if (! err.empty()) {
-            std::cerr << err << '\n';
+            std::cerr << err << '\n' << "JSON content: " << device << '\n';
             exit(2);
         }
         if (! v.is<picojson::object>()) {
