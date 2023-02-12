@@ -9,7 +9,7 @@ Forum post: https://www.alfredforum.com/topic/17556-fast-sound-inputoutput-selec
 
 ## Credits
 - [rnine/SimplyCoreAudio](https://github.com/rnine/SimplyCoreAudio)
-- [julienXX/terminal-notifier](https://github.com/julienXX/terminal-notifier)
+- [vitorgalvao/notificator](https://github.com/vitorgalvao/notificator)
 
 ## Some alternatives
 - [SwitchAudio](https://www.alfredforum.com/topic/18757-switchaudio-yet-another-audio-device-switcher/) by Shark.Formax
