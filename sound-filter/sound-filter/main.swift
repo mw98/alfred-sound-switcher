@@ -2,20 +2,20 @@ import Foundation
 import SimplyCoreAudio
 
 // Script filter JSON model
-struct Result: Encodable {
-    var items: Array<Item>
+struct ScriptFilter: Encodable {
+    let items: Array<Item>
     struct Item: Encodable {
-        var title: String
-        var subtitle: String
-        var arg: String
-        var valid: Bool
-        var icon: Icon
-        var variables: Variables
+        let title: String
+        let subtitle: String
+        let arg: String
+        let valid: Bool
+        let icon: Icon
+        let variables: Variables
         struct Icon: Encodable {
-            var path: String
+            let path: String
         }
         struct Variables: Encodable {
-            var type: String
+            let type: String
         }
     }
 }
@@ -29,53 +29,55 @@ if blocklistStr == "" {
     blocklistArr = blocklistStr.components(separatedBy: "\n")
 }
 
+// Detect appearance
+let appearance: String = UserDefaults().string(forKey: "AppleInterfaceStyle") ?? "Light"
+let iconDirectory: String = "assets/\(appearance)"
+
 // Construct script filter JSON
 let simplyCA = SimplyCoreAudio()
-var item: Result.Item
-var validity: Bool
-var iconPath: String
 var subtitle: String
-
-var items: Array<Result.Item> = []
+var validity: Bool
+var icon: ScriptFilter.Item.Icon
+var items: Array<ScriptFilter.Item> = []
 
 for device in simplyCA.allOutputDevices {
     let deviceName: String = device.name
+    let deviceTransportType: String = device.transportType!.rawValue
     if !blocklistArr.contains(deviceName.lowercased()) {
         if device.isDefaultOutputDevice {
-            subtitle = "Current Output Device"
+            subtitle = "Selected · \(deviceTransportType)"
             validity = false
-            iconPath = "output_selected.png"
+            icon = ScriptFilter.Item.Icon(path: "\(iconDirectory)/output_selected.png")
         } else {
-            subtitle = "Press ↩ to select"
+            subtitle = "Not Selected · \(deviceTransportType)"
             validity = true
-            iconPath = "output.png"
+            icon = ScriptFilter.Item.Icon(path: "\(iconDirectory)/output.png")
         }
-        item = Result.Item(title: deviceName, subtitle: subtitle, arg: deviceName, valid: validity, icon: Result.Item.Icon(path: iconPath), variables: Result.Item.Variables(type: "output"))
-        items.append(item)
+        items.append(ScriptFilter.Item(title: deviceName, subtitle: subtitle, arg: deviceName, valid: validity, icon: icon, variables: ScriptFilter.Item.Variables(type: "output")))
     }
 }
 
 for device in simplyCA.allInputDevices {
     let deviceName: String = device.name
+    let deviceTransportType: String = device.transportType!.rawValue
     if !blocklistArr.contains(deviceName.lowercased()) {
         if device.isDefaultInputDevice {
-            subtitle = "Current Input Device"
+            subtitle = "Selected · \(deviceTransportType)"
             validity = false
-            iconPath = "input_selected.png"
+            icon = ScriptFilter.Item.Icon(path: "\(iconDirectory)/input_selected.png")
         } else {
-            subtitle = "Press ↩ to select"
+            subtitle = "Not Selected · \(deviceTransportType)"
             validity = true
-            iconPath = "input.png"
+            icon = ScriptFilter.Item.Icon(path: "\(iconDirectory)/input.png")
         }
-        item = Result.Item(title: deviceName, subtitle: subtitle, arg: deviceName, valid: validity, icon: Result.Item.Icon(path: iconPath), variables: Result.Item.Variables(type: "input"))
-        items.append(item)
+        items.append(ScriptFilter.Item(title: deviceName, subtitle: subtitle, arg: deviceName, valid: validity, icon: icon, variables: ScriptFilter.Item.Variables(type: "input")))
     }
 }
 
 // Encode script filter JSON
 let encoder = JSONEncoder()
 do {
-    let result = try encoder.encode(Result(items: items))
+    let result = try encoder.encode(ScriptFilter(items: items))
     print(String(data: result, encoding: .utf8)!)
 } catch {
     print(error.localizedDescription)
